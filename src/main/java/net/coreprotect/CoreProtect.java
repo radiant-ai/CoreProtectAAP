@@ -147,13 +147,6 @@ public final class CoreProtect extends JavaPlugin {
                 return false;
             }
 
-            if (ConfigHandler.EDITION_BRANCH.length() == 0) {
-                Chat.sendConsoleMessage(Color.RED + "[CoreProtect] " + Phrase.build(Phrase.INVALID_BRANCH_1));
-                Chat.sendConsoleMessage(Color.GREY + "[CoreProtect] " + Phrase.build(Phrase.INVALID_BRANCH_2));
-                Chat.sendConsoleMessage(Color.GREY + "[CoreProtect] " + Phrase.build(Phrase.INVALID_BRANCH_3));
-                return false;
-            }
-
             ConfigHandler.SERVER_VERSION = Integer.parseInt(bukkitVersion[1]);
         }
         catch (Exception e) {
