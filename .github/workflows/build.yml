@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - master
-  pull_request:
-    types: [opened, synchronize, reopened]
 jobs:
   build:
     name: Build
@@ -24,5 +22,27 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build
-        run: mvn -B verify
+      - name: Read artifact name, version
+        shell: bash
+        run: |
+          echo "artifact_id=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout=true)" >> $GITHUB_ENV
+          echo "artifact_version=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout=true)" >> $GITHUB_ENV
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots package
+      - name: Copy jar files to staging
+        shell: bash
+        run: |
+          mkdir staging && cp target/${{ env.artifact_id }}-${{ env.artifact_version }}.jar staging
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: staging
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: staging/*
+          tag_name: "v${{ env.artifact_version }}-${{ github.sha }}"
+          prerelease: false
+          body: 'Package for commit: ${{ github.sha }}'
+          make_latest: "true"

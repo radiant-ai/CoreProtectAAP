@@ -15,6 +15,7 @@ For a detailed description of the plugin, please visit [coreprotect.net](https:/
 
 | Quick Links |  |
 | --- | --- |
+| Original sources: | [CoreProtect](https://github.com/PlayPro/CoreProtect) |
 | CoreProtect Discord: | [discord.gg/b4DZ4jy](https://discord.gg/b4DZ4jy) |
 | CoreProtect Patreon: | [patreon.com/coreprotect](https://www.patreon.com/coreprotect) |
 | CoreProtect Documentation: | [docs.coreprotect.net](https://docs.coreprotect.net) |
