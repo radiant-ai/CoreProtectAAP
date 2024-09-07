@@ -25,7 +25,7 @@ import net.coreprotect.config.Config;
 import net.coreprotect.consumer.Queue;
 import net.coreprotect.database.Database;
 import net.coreprotect.database.Lookup;
-import net.coreprotect.database.Rollback;
+import net.coreprotect.database.rollback.Rollback;
 import net.coreprotect.language.Phrase;
 import net.coreprotect.listener.player.InventoryChangeListener;
 import net.coreprotect.utility.Chat;
@@ -545,6 +545,9 @@ public class CoreProtectAPI extends Queue {
                     if (!Bukkit.isPrimaryThread()) {
                         boolean verbose = false;
                         result = Rollback.performRollbackRestore(statement, null, uuids, restrictUsers, null, restrictBlocks, excludeBlocks, excludeUsers, actionList, location, argRadius, startTime, endTime, restrictWorld, false, verbose, action, 0);
+                    }
+                    else {
+                        Chat.console(Phrase.build(Phrase.PRIMARY_THREAD_ERROR));
                     }
                 }
 
