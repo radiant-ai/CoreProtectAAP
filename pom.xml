@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.coreprotect</groupId>
   <artifactId>CoreProtect</artifactId>
-  <version>23.2</version>
+  <version>23.1</version>
   <properties>
     <project.branch></project.branch>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -113,6 +113,31 @@
           <skipTests>${skipTests}</skipTests>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.6.1</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requireNoRepositories>
+                  <allowedRepositories>
+                    <allowedRepository>central</allowedRepository>
+                    <allowedRepository>enginehub-repo</allowedRepository>
+                    <allowedRepository>spigot-repo</allowedRepository>
+                    <allowedRepository>paper-repo</allowedRepository>
+                    <allowedRepository>codemc-repo</allowedRepository>
+                    <allowedRepository>jitpack.io</allowedRepository>
+                  </allowedRepositories>
+                </requireNoRepositories>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <profiles>
@@ -153,6 +178,18 @@
   </profiles>
   <repositories>
     <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2/</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+    <repository>
+      <id>enginehub-repo</id>
+      <url>https://maven.enginehub.org/repo/</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>true</enabled></snapshots>
+    </repository>
+    <repository>
       <id>spigot-repo</id>
       <url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
     </repository>
@@ -169,17 +206,6 @@
       <url>https://jitpack.io</url>
     </repository>
   </repositories>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>com.intellectualsites.bom</groupId>
-        <artifactId>bom-newest</artifactId> <!--  Ref: https://github.com/IntellectualSites/bom -->
-        <version>1.45</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <dependencies>
     <!--
     paper-api: io.papermc.paper
@@ -190,7 +216,7 @@
     <dependency>
       <groupId>io.papermc.paper</groupId>
       <artifactId>paper-api</artifactId>
-      <version>1.21.1-R0.1-SNAPSHOT</version>
+      <version>1.21.11-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -202,16 +228,18 @@
     <dependency>
       <groupId>com.fastasyncworldedit</groupId>
       <artifactId>FastAsyncWorldEdit-Core</artifactId>
+      <version>2.13.1</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.fastasyncworldedit</groupId>
       <artifactId>FastAsyncWorldEdit-Bukkit</artifactId>
+      <version>2.13.1</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
-          <artifactId>FastAsyncWorldEdit-Core</artifactId>
           <groupId>*</groupId>
+          <artifactId>FastAsyncWorldEdit-Core</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
