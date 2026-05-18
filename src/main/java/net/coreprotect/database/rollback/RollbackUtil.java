@@ -18,6 +18,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BannerMeta;
@@ -93,7 +94,16 @@ public class RollbackUtil extends Lookup {
                 }
             }
             else if (type != null && type.equals(Material.JUKEBOX)) {
-                Jukebox jukebox = (Jukebox) container;
+                Jukebox jukebox = null;
+                if (container instanceof Jukebox) {
+                    jukebox = (Jukebox) container;
+                }
+                else if (container instanceof Inventory) {
+                    InventoryHolder holder = ((Inventory) container).getHolder();
+                    if (holder instanceof Jukebox) {
+                        jukebox = (Jukebox) holder;
+                    }
+                }
                 if (jukebox != null) {
                     if (action == 1 && itemstack.getType().name().startsWith("MUSIC_DISC")) {
                         itemstack.setAmount(1);

@@ -29,6 +29,7 @@ import com.sk89q.worldedit.world.block.BlockStateHolder;
 
 import net.coreprotect.config.Config;
 import net.coreprotect.consumer.Queue;
+import net.coreprotect.model.action.SignActions;
 import net.coreprotect.utility.BlockUtils;
 import net.coreprotect.utility.EntityUtils;
 
@@ -81,7 +82,7 @@ public class WorldEditLogger extends Queue {
                             boolean isWaxed = false;
                             boolean isFront = true;
 
-                            Queue.queueSignText(actor.getName(), location, 0, color, colorSecondary, frontGlowing, backGlowing, isWaxed, isFront, line1, line2, line3, line4, "", "", "", "", 5);
+                            Queue.queueSignText(actor.getName(), location, SignActions.BREAK, color, colorSecondary, frontGlowing, backGlowing, isWaxed, isFront, line1, line2, line3, line4, "", "", "", "", 5);
                         }
                     }
                     if (oldType == Material.SPAWNER) {

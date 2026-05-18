@@ -107,6 +107,9 @@ public class StatusCommand {
                         e.printStackTrace();
                     }
 
+                    long autoPurgeRowsPurged = ConfigHandler.autoPurgeRowsPurged.get();
+                    Chat.sendMessage(player, Color.DARK_AQUA + Phrase.build(Phrase.STATUS_AUTO_PURGE, Color.WHITE, String.format("%,d", autoPurgeRowsPurged), (autoPurgeRowsPurged == 1 ? Selector.FIRST : Selector.SECOND)));
+
                     try {
                         String cpuInfo = "";
                         if (ConfigHandler.processorInfo != null) {

@@ -1,11 +1,14 @@
 package net.coreprotect.bukkit;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.Art;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -22,6 +25,10 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Painting;
+import org.bukkit.entity.Villager;
+import org.bukkit.event.Event;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -114,6 +121,25 @@ public class BukkitAdapter implements BukkitInterface {
     }
 
     @Override
+    public void addMerchantRecipeMeta(MerchantRecipe recipe, List<Object> recipeData) {
+    }
+
+    @Override
+    public void setMerchantRecipeMeta(MerchantRecipe recipe, List<?> recipeData) {
+    }
+
+    @Override
+    public void refreshVillagerBrain(Villager villager) {
+        try {
+            Object handle = villager.getClass().getMethod("getHandle").invoke(villager);
+            Object level = villager.getWorld().getClass().getMethod("getHandle").invoke(villager.getWorld());
+            invokeSingleArgumentMethod(handle, "refreshBrain", level);
+        }
+        catch (Exception e) {
+        }
+    }
+
+    @Override
     public void getWolfVariant(org.bukkit.entity.Wolf wolf, List<Object> info) {
         // Base implementation does nothing - Wolf variants only exist in 1.21+
     }
@@ -182,6 +208,24 @@ public class BukkitAdapter implements BukkitInterface {
         return itemStack;
     }
 
+    private static void invokeSingleArgumentMethod(Object target, String methodName, Object argument) {
+        if (target == null || argument == null) {
+            return;
+        }
+
+        for (Method method : target.getClass().getMethods()) {
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (method.getName().equals(methodName) && parameterTypes.length == 1 && parameterTypes[0].isInstance(argument)) {
+                try {
+                    method.invoke(target, argument);
+                }
+                catch (Exception e) {
+                }
+                return;
+            }
+        }
+    }
+
     // -------------------- Block methods --------------------
 
     @Override
@@ -219,6 +263,21 @@ public class BukkitAdapter implements BukkitInterface {
     @Override
     public Material getBucketContents(Material material) {
         return Material.AIR;
+    }
+
+    @Override
+    public boolean hasBlockType(String key) {
+        return false;
+    }
+
+    @Override
+    public BlockData createBlockData(String key) {
+        return null;
+    }
+
+    @Override
+    public BlockData createBlockDataFromString(String blockData) {
+        return null;
     }
 
     @Override
@@ -317,6 +376,17 @@ public class BukkitAdapter implements BukkitInterface {
     }
 
     @Override
+    public boolean shouldLogExplosion(Event event){
+        return true;
+    }
+
+    @Override
+    public Material getExplodedBlock(BlockExplodeEvent event){
+        // accoding to the Bukkit docs this will always return air
+        return event.getBlock().getType();
+    }
+
+    @Override
     public void setGlowing(Sign sign, boolean isFront, boolean isGlowing) {
         // Base implementation does nothing
     }
@@ -357,7 +427,32 @@ public class BukkitAdapter implements BukkitInterface {
     }
 
     @Override
+    public String getPaintingArtKey(Painting painting) {
+        try {
+            return painting.getArt().name();
+        }
+        catch (IncompatibleClassChangeError e) {
+            return painting.getArt().toString();
+        }
+    }
+
+    @Override
+    public Art getPaintingArt(String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+
+        return Art.getByName(name.toUpperCase(Locale.ROOT));
+    }
+
+    @Override
     public boolean isCrafter(InventoryType type) {
+        return false;
+    }
+
+
+    @Override
+    public boolean isBundle(Material material) {
         return false;
     }
 

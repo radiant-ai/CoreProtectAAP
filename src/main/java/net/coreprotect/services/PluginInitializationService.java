@@ -21,6 +21,7 @@ import net.coreprotect.thread.NetworkHandler;
 import net.coreprotect.thread.Scheduler;
 import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.ChatUtils;
+import net.coreprotect.utility.Extensions;
 
 /**
  * Service responsible for plugin initialization tasks
@@ -153,6 +154,8 @@ public class PluginInitializationService {
 
         // Start consumer
         Consumer.startConsumer();
+
+        Extensions.startBackgroundService();
     }
 
     /**

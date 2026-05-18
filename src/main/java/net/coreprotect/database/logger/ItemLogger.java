@@ -16,6 +16,7 @@ import net.coreprotect.config.ConfigHandler;
 import net.coreprotect.database.statement.ItemStatement;
 import net.coreprotect.database.statement.UserStatement;
 import net.coreprotect.event.CoreProtectPreLogEvent;
+import net.coreprotect.model.item.ItemTransactionActions;
 import net.coreprotect.utility.BlockUtils;
 import net.coreprotect.utility.ItemUtils;
 import net.coreprotect.utility.MaterialUtils;
@@ -24,19 +25,19 @@ import net.coreprotect.utility.serialize.ItemMetaHandler;
 
 public class ItemLogger {
 
-    public static final int ITEM_REMOVE = 0;
-    public static final int ITEM_ADD = 1;
-    public static final int ITEM_DROP = 2;
-    public static final int ITEM_PICKUP = 3;
-    public static final int ITEM_REMOVE_ENDER = 4;
-    public static final int ITEM_ADD_ENDER = 5;
-    public static final int ITEM_THROW = 6;
-    public static final int ITEM_SHOOT = 7;
-    public static final int ITEM_BREAK = 8;
-    public static final int ITEM_DESTROY = 9;
-    public static final int ITEM_CREATE = 10;
-    public static final int ITEM_SELL = 11;
-    public static final int ITEM_BUY = 12;
+    public static final int ITEM_REMOVE = ItemTransactionActions.REMOVE;
+    public static final int ITEM_ADD = ItemTransactionActions.ADD;
+    public static final int ITEM_DROP = ItemTransactionActions.DROP;
+    public static final int ITEM_PICKUP = ItemTransactionActions.PICKUP;
+    public static final int ITEM_REMOVE_ENDER = ItemTransactionActions.REMOVE_ENDER;
+    public static final int ITEM_ADD_ENDER = ItemTransactionActions.ADD_ENDER;
+    public static final int ITEM_THROW = ItemTransactionActions.THROW;
+    public static final int ITEM_SHOOT = ItemTransactionActions.SHOOT;
+    public static final int ITEM_BREAK = ItemTransactionActions.BREAK;
+    public static final int ITEM_DESTROY = ItemTransactionActions.DESTROY;
+    public static final int ITEM_CREATE = ItemTransactionActions.CREATE;
+    public static final int ITEM_SELL = ItemTransactionActions.SELL;
+    public static final int ITEM_BUY = ItemTransactionActions.BUY;
 
     private ItemLogger() {
         throw new IllegalStateException("Database class");
@@ -44,7 +45,7 @@ public class ItemLogger {
 
     public static void log(PreparedStatement preparedStmt, int batchCount, Location location, int offset, String user) {
         try {
-            if (ConfigHandler.blacklist.get(user.toLowerCase(Locale.ROOT)) != null) {
+            if (ConfigHandler.isBlacklisted(user)) {
                 return;
             }
 
@@ -124,12 +125,16 @@ public class ItemLogger {
             for (ItemStack item : items) {
                 if (item != null && item.getAmount() > 0 && !BlockUtils.isAir(item.getType())) {
                     // Object[] metadata = new Object[] { slot, item.getItemMeta() };
+                    if (ConfigHandler.isFilterBlacklisted(user, item.getType().getKey().toString())){
+                        continue;
+                    }
+
                     List<List<Map<String, Object>>> data = ItemMetaHandler.serialize(item, null, null, 0);
                     if (data.size() == 0) {
                         data = null;
                     }
 
-                    CoreProtectPreLogEvent event = new CoreProtectPreLogEvent(user, location);
+                    CoreProtectPreLogEvent event = new CoreProtectPreLogEvent(user, location, CoreProtectPreLogEvent.Action.ITEM_TRANSACTION, action, item.getType(), null, null);
                     if (Config.getGlobal().API_ENABLED && !Bukkit.isPrimaryThread()) {
                         CoreProtect.getInstance().getServer().getPluginManager().callEvent(event);
                     }
@@ -137,7 +142,7 @@ public class ItemLogger {
                     if (event.isCancelled()) {
                         return;
                     }
-
+                    
                     int userId = UserStatement.getId(preparedStmt, event.getUser(), true);
                     Location eventLocation = event.getLocation();
                     int wid = WorldUtils.getWorldId(eventLocation.getWorld().getName());

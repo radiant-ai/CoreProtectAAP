@@ -34,6 +34,51 @@ import net.coreprotect.utility.VersionUtils;
 
 public class PurgeCommand extends Consumer {
 
+    public static final List<String> PURGE_TABLES = Arrays.asList("sign", "container", "item", "skull", "session", "chat", "command", "entity", "block");
+
+    private static String findUnsupportedPurgeArgument(String[] args) {
+        boolean includeContinuation = false;
+        for (int i = 1; i < args.length; i++) {
+            String token = args[i].trim();
+            if (token.length() == 0) {
+                continue;
+            }
+
+            String argument = token.toLowerCase(Locale.ROOT);
+            argument = argument.replaceAll("\\\\", "");
+            argument = argument.replaceAll("'", "");
+
+            if (includeContinuation) {
+                includeContinuation = argument.endsWith(",");
+                continue;
+            }
+
+            if (argument.equals("#optimize")) {
+                continue;
+            }
+
+            if (argument.startsWith("i:") || argument.startsWith("include:") || argument.startsWith("item:") || argument.startsWith("items:") || argument.startsWith("b:") || argument.startsWith("block:") || argument.startsWith("blocks:")) {
+                String includeValues = argument.replaceAll("include:", "").replaceAll("i:", "").replaceAll("items:", "").replaceAll("item:", "").replaceAll("blocks:", "").replaceAll("block:", "").replaceAll("b:", "");
+                includeContinuation = includeValues.length() == 0 || includeValues.endsWith(",");
+                continue;
+            }
+
+            if (argument.startsWith("t:") || argument.startsWith("time:")) {
+                continue;
+            }
+
+            if (argument.startsWith("r:") || argument.startsWith("radius:")) {
+                continue;
+            }
+
+            if (argument.contains(":")) {
+                return token;
+            }
+        }
+
+        return null;
+    }
+
     protected static void runCommand(final CommandSender player, boolean permission, String[] args) {
         int resultc = args.length;
         Location location = CommandParser.parseLocation(player, args);
@@ -66,6 +111,12 @@ public class PurgeCommand extends Consumer {
         }
         if (resultc <= 1) {
             Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co purge t:<time>"));
+            return;
+        }
+        String unsupportedArgument = findUnsupportedPurgeArgument(args);
+        if (unsupportedArgument != null) {
+            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.INVALID_PARAMETER, unsupportedArgument));
+            Chat.sendMessage(player, Color.DARK_AQUA + "CoreProtect " + Color.WHITE + "- " + Phrase.build(Phrase.MISSING_PARAMETERS, "/co help purge"));
             return;
         }
         if (endTime <= 0) {
@@ -142,6 +193,18 @@ public class PurgeCommand extends Consumer {
 
                     targetName = ((EntityType) restrictTarget).name().toLowerCase(Locale.ROOT);
                     entity = true;
+                }
+                else if (restrictTarget instanceof String) {
+                    int blockId = MaterialUtils.getBlockId((String) restrictTarget, false);
+                    if (includeListMaterial.length() == 0) {
+                        includeListMaterial = includeListMaterial.append(blockId);
+                    }
+                    else {
+                        includeListMaterial.append(",").append(blockId);
+                    }
+
+                    targetName = ((String) restrictTarget).toLowerCase(Locale.ROOT);
+                    hasBlock = true;
                 }
 
                 if (restrictCount == 0) {
@@ -260,7 +323,6 @@ public class PurgeCommand extends Consumer {
                         Database.createDatabaseTables(purgePrefix, false, null, Config.getGlobal().MYSQL, true);
                     }
 
-                    List<String> purgeTables = Arrays.asList("sign", "container", "item", "skull", "session", "chat", "command", "entity", "block");
                     List<String> worldTables = Arrays.asList("sign", "container", "item", "session", "chat", "command", "block");
                     List<String> restrictTables = Arrays.asList("block");
                     List<String> excludeTables = Arrays.asList("database_lock"); // don't insert data into these tables
@@ -289,7 +351,7 @@ public class PurgeCommand extends Consumer {
                                 try {
                                     boolean purge = true;
                                     String timeLimit = "";
-                                    if (purgeTables.contains(table)) {
+                                    if (PURGE_TABLES.contains(table)) {
                                         String blockRestriction = "(";
                                         if (hasBlockRestriction && restrictTables.contains(table)) {
                                             blockRestriction = "type NOT IN(" + includeBlockFinal + ") OR (type IN(" + includeBlockFinal + ") AND ";
@@ -354,7 +416,7 @@ public class PurgeCommand extends Consumer {
                                 }
 
                                 try {
-                                    boolean purge = purgeTables.contains(table);
+                                    boolean purge = PURGE_TABLES.contains(table);
 
                                     String blockRestriction = "";
                                     if (hasBlockRestriction && restrictTables.contains(table)) {
@@ -384,7 +446,7 @@ public class PurgeCommand extends Consumer {
                                 }
                             }
 
-                            if (purgeTables.contains(table)) {
+                            if (PURGE_TABLES.contains(table)) {
                                 int oldCount = 0;
                                 try {
                                     query = "SELECT COUNT(*) as count FROM " + ConfigHandler.prefix + table + " LIMIT 0, 1";
@@ -421,7 +483,7 @@ public class PurgeCommand extends Consumer {
 
                         if (Config.getGlobal().MYSQL) {
                             try {
-                                boolean purge = purgeTables.contains(table);
+                                boolean purge = PURGE_TABLES.contains(table);
 
                                 String blockRestriction = "";
                                 if (hasBlockRestriction && restrictTables.contains(table)) {

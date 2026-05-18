@@ -1,5 +1,6 @@
 package net.coreprotect.paper;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -8,8 +9,10 @@ import org.bukkit.Server;
 import org.bukkit.block.Sign;
 import org.bukkit.block.Skull;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Villager;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.MerchantRecipe;
 
 import net.coreprotect.bukkit.BukkitAdapter;
 import net.coreprotect.config.ConfigHandler;
@@ -97,6 +100,33 @@ public class PaperAdapter implements PaperInterface {
     @Override
     public void setSkullSkin(Skull skull, String skin) {
         return;
+    }
+
+    @Override
+    public List<Object> getVillagerReputations(Villager villager) {
+        return List.of();
+    }
+
+    @Override
+    public boolean setVillagerReputations(Villager villager, List<?> reputations) {
+        return false;
+    }
+
+    @Override
+    public Object getVillagerRestocksToday(Villager villager) {
+        return null;
+    }
+
+    @Override
+    public void setVillagerRestocksToday(Villager villager, Object value) {
+    }
+
+    @Override
+    public void addMerchantRecipeMeta(MerchantRecipe recipe, List<Object> recipeData) {
+    }
+
+    @Override
+    public void setMerchantRecipeMeta(MerchantRecipe recipe, List<?> recipeData) {
     }
 
 }
