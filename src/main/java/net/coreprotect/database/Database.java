@@ -24,12 +24,12 @@ import net.coreprotect.consumer.Consumer;
 import net.coreprotect.consumer.Queue;
 import net.coreprotect.consumer.process.Process;
 import net.coreprotect.language.Phrase;
+import net.coreprotect.listener.player.InventoryChangeListener;
 import net.coreprotect.model.BlockGroup;
 import net.coreprotect.model.rollback.RollbackUpdateTargets;
 import net.coreprotect.utility.Chat;
 import net.coreprotect.utility.Color;
 import net.coreprotect.utility.ItemUtils;
-import net.coreprotect.utility.MaterialUtils;
 import net.coreprotect.utility.ErrorReporter;
 
 public class Database extends Queue {
@@ -48,6 +48,8 @@ public class Database extends Queue {
     public static final int ENTITY_MAP = 11;
     public static final int BLOCKDATA = 12;
     public static final int ITEM = 13;
+
+    private static final int ROLLED_BACK_UPDATE_BATCH_SIZE = 1000;
 
     private static final Map<Integer, String> SQL_QUERIES = new HashMap<>();
 
@@ -137,17 +139,19 @@ public class Database extends Queue {
     }
 
     public static void containerBreakCheck(String user, Material type, Object container, ItemStack[] contents, Location location) {
-        if (BlockGroup.CONTAINERS.contains(type) && !BlockGroup.SHULKER_BOXES.contains(type)) {
+        if (BlockGroup.CONTAINERS.contains(type)) {
             if (Config.getConfig(location.getWorld()).ITEM_TRANSACTIONS) {
                 try {
                     if (contents == null) {
                         contents = ItemUtils.getContainerContents(type, container, location);
                     }
                     if (contents != null) {
-                        List<ItemStack[]> forceList = new ArrayList<>();
-                        forceList.add(ItemUtils.getContainerState(contents));
-                        ConfigHandler.forceContainer.put(user.toLowerCase(Locale.ROOT) + "." + location.getBlockX() + "." + location.getBlockY() + "." + location.getBlockZ(), forceList);
-                        Queue.queueContainerBreak(user, location, type, contents);
+                        if (BlockGroup.SHULKER_BOXES.contains(type)) {
+                            InventoryChangeListener.flushPendingContainer(location, contents);
+                        }
+                        else {
+                            InventoryChangeListener.queueContainerBreak(user, location, type, contents);
+                        }
                     }
                 }
                 catch (Exception e) {
@@ -223,17 +227,31 @@ public class Database extends Queue {
         }
     }
 
-    public static void performUpdate(Statement statement, long id, int rb, int table) {
+    public static void performRolledBackUpdate(Statement statement, int rolledBack, List<Long> rowIds, int table) {
+        String tableName;
+        if (RollbackUpdateTargets.updatesContainerTable(table)) {
+            tableName = "container";
+        }
+        else if (RollbackUpdateTargets.updatesItemTable(table)) {
+            tableName = "item";
+        }
+        else {
+            tableName = "block";
+        }
+
         try {
-            int rolledBack = MaterialUtils.toggleRolledBack(rb, RollbackUpdateTargets.usesInventoryRollbackState(table));
-            if (RollbackUpdateTargets.updatesContainerTable(table)) {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "container SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
-            }
-            else if (RollbackUpdateTargets.updatesItemTable(table)) {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "item SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
-            }
-            else {
-                statement.executeUpdate("UPDATE " + ConfigHandler.prefix + "block SET rolled_back='" + rolledBack + "' WHERE rowid='" + id + "'");
+            int listSize = rowIds.size();
+            for (int startIndex = 0; startIndex < listSize; startIndex += ROLLED_BACK_UPDATE_BATCH_SIZE) {
+                int endIndex = Math.min(startIndex + ROLLED_BACK_UPDATE_BATCH_SIZE, listSize);
+                StringBuilder query = new StringBuilder("UPDATE " + ConfigHandler.prefix + tableName + " SET rolled_back='" + rolledBack + "' WHERE rowid IN(");
+                for (int index = startIndex; index < endIndex; index++) {
+                    if (index > startIndex) {
+                        query.append(",");
+                    }
+                    query.append(rowIds.get(index).longValue());
+                }
+                query.append(")");
+                statement.executeUpdate(query.toString());
             }
         }
         catch (Exception e) {
